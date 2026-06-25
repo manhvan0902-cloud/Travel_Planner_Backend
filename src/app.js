@@ -14,11 +14,13 @@ app.use(express.urlencoded({ extended: false }));
 
 //import routes
 const authRoute = require("./routes/authRoute");
+const userRoute = require("./routes/userRoute");
 
 //public route
 app.use("/api/auth", authRoute);
 
 //private route
+app.use("/api/users", userRoute);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
