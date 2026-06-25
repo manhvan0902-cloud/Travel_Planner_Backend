@@ -30,8 +30,12 @@ const uploadAvatar = multer({ storage: avatarStorage });
 const postStorage = createStorage("posts", [{ width: 1200, crop: "limit" }]);
 const uploadPost = multer({ storage: postStorage });
 
+const tripCoverStorage = createStorage("trip_covers", [{ width: 1200, crop: "limit" }]);
+const uploadTripCover = multer({ storage: tripCoverStorage });
+
 module.exports = {
   cloudinary,
   uploadAvatar,
   uploadPost,
+  uploadTripCover,
 };
