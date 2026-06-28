@@ -158,3 +158,39 @@ exports.deleteAccount = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi máy chủ nội bộ." });
   }
 };
+
+exports.updateFCMToken = async (req, res) => {
+  try {
+    const { fcm_token } = req.body;
+    
+    if (!fcm_token) {
+      return res.status(400).json({
+        success: false,
+        message: "fcm_token là bắt buộc."
+      });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy người dùng."
+      });
+    }
+
+    user.fcm_token = fcm_token;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Cập nhật FCM Token thành công."
+    });
+  } catch (error) {
+    console.error("Update FCM Token Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ nội bộ.",
+      error: error.message
+    });
+  }
+};
