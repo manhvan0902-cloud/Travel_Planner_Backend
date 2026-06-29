@@ -4,6 +4,7 @@ const { sequelize } = require("./configs/database.js");
 const { initSocket } = require("./socketIO/socket.js");
 
 require("dotenv").config();
+require("./configs/firebase.js");
 
 const PORT = process.env.PORT || 3000;
 

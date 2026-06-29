@@ -1,5 +1,6 @@
-const { Trip, TripMember, User } = require("../models/index.js");
+const { Trip, TripMember, User, Notification } = require("../models/index.js");
 const { sequelize } = require("../configs/database.js");
+const { getIo, emitToUser } = require("../socketIO/socket.js");
 
 
 exports.getMyTrips = async (req, res) => {
@@ -82,6 +83,8 @@ exports.createTrip = async (req, res) => {
     );
 
     await t.commit();
+
+
 
     res.status(201).json({
       success: true,
@@ -168,6 +171,33 @@ exports.updateTrip = async (req, res) => {
       member_count: member_count || trip.member_count,
     });
 
+    const members = await TripMember.findAll({
+      where: { trip_id: id, status: 'accepted' }
+    });
+
+    for (const member of members) {
+      if (member.user_id !== userId) {
+        // Create Notification
+        const notification = await Notification.create({
+          user_id: member.user_id,
+          type: 'schedule_updated',
+          title: 'Cập nhật thông tin chuyến đi',
+          body: `Chuyến đi "${trip.title}" vừa được cập nhật.`,
+          metadata: {
+            tripId: trip.id,
+            senderId: userId,
+            senderName: req.user.full_name || "Trưởng nhóm",
+          }
+        });
+        
+        // Emit newNotification to update notification bell
+        emitToUser(member.user_id, "newNotification", notification);
+      }
+      
+      // Emit tripUpdated to everyone in the trip (including lead if they use multiple devices)
+      emitToUser(member.user_id, "tripUpdated", trip);
+    }
+
     res.status(200).json({
       success: true,
       message: "Trip updated successfully",
@@ -198,7 +228,15 @@ exports.deleteTrip = async (req, res) => {
     if (trip.lead_id !== userId) {
       return res.status(403).json({ success: false, message: "Only the trip lead can delete the trip" });
     }
+    const members = await TripMember.findAll({
+      where: { trip_id: id }
+    });
+
     await trip.destroy();
+
+    for (const member of members) {
+      emitToUser(member.user_id, "tripDeleted", { id });
+    }
 
     res.status(200).json({
       success: true,
@@ -213,4 +251,3 @@ exports.deleteTrip = async (req, res) => {
     });
   }
 };
-

@@ -3,8 +3,7 @@ const { getMyTrips,
         createTrip, 
         getTripDetails, 
         updateTrip, 
-        deleteTrip, 
-        getTripOverview 
+        deleteTrip
 } = require("../controllers/tripController.js");
 const authMiddleware = require("../middlewares/authMiddleware.js");
 const { uploadTripCover } = require("../configs/cloudinary.js");

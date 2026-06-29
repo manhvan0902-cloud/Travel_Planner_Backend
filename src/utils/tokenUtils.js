@@ -5,6 +5,7 @@ const generateTokens = (user) => {
   const payload = {
     id: user.id,
     email: user.email,
+    full_name: user.full_name,
   };
 
   const accessToken = jwt.sign(payload, process.env.JWT_SECRET || "access_secret_key", {

@@ -2,6 +2,7 @@ const { Server } = require("socket.io");
 const { authenticateSocketMiddleware } = require("../middlewares/socketMiddleware.js");
 
 let io;
+const onlineUsers = new Map();
 
 const initSocket = (server) => {
   io = new Server(server, {
@@ -18,12 +19,16 @@ const initSocket = (server) => {
 
   io.on("connection", (socket) => {
     const user = socket.user;
-    console.log(`${user.username} connected with socket id ${socket.id}`);
+    const identifier = user.username || user.full_name || user.id;
+    console.log(`${identifier} connected with socket id ${socket.id}`);
+    
+    onlineUsers.set(user.id, { socketId: socket.id, user });
+    io.emit("onlineUsers", Array.from(onlineUsers.values()).map(u => u.user));
 
     socket.on("disconnect", () => {
-      console.log(`${user.username} disconnected with socket id ${socket.id}`);
+      console.log(`${identifier} disconnected with socket id ${socket.id}`);
       onlineUsers.delete(user.id);
-      io.emit("onlineUsers", Array.from(onlineUsers.values()));
+      io.emit("onlineUsers", Array.from(onlineUsers.values()).map(u => u.user));
     });
   });
 
@@ -41,7 +46,20 @@ const getIo = () => {
   return io;
 };
 
+const getOnlineUsers = () => {
+  return onlineUsers;
+};
+
+const emitToUser = (userId, eventName, data) => {
+  const userSocket = onlineUsers.get(userId);
+  if (userSocket) {
+    io.to(userSocket.socketId).emit(eventName, data);
+  }
+};
+
 module.exports = {
   initSocket,
   getIo,
+  getOnlineUsers,
+  emitToUser
 };

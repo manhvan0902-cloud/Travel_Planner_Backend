@@ -16,13 +16,16 @@ app.use(express.urlencoded({ extended: false }));
 const authRoute = require("./routes/authRoute");
 const userRoute = require("./routes/userRoute");
 const tripRoute = require("./routes/tripRoute");
-
+const memberTripRoute = require("./routes/memberTripRoute");
+const notificationRoute = require("./routes/notificationRoute");
 //public route
 app.use("/api/auth", authRoute);
 
 //private route
 app.use("/api/users", userRoute);
 app.use("/api/trips", tripRoute);
+app.use("/api/members_trip", memberTripRoute);  
+app.use("/api/notifications", notificationRoute);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

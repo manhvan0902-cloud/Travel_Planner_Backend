@@ -2,7 +2,7 @@ const User = require('./User');
 const RefreshToken = require('./RefreshToken');
 const Trip = require('./Trip');
 const TripMember = require('./TripMember');
-
+const Notification = require('./Notification');
 
 // 1. User <-> RefreshToken (One-to-Many)
 User.hasMany(RefreshToken, { foreignKey: 'user_id', as: 'refresh_tokens' });
@@ -24,9 +24,14 @@ TripMember.belongsTo(User, { foreignKey: 'user_id' });
 User.belongsToMany(Trip, { through: TripMember, foreignKey: 'user_id', as: 'joined_trips' });
 Trip.belongsToMany(User, { through: TripMember, foreignKey: 'trip_id', as: 'participants' });
 
+// 6. User <-> Notification (One-to-Many)
+User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications' });
+Notification.belongsTo(User, { foreignKey: 'user_id' });
+
 module.exports = {
   User,
   RefreshToken,
   Trip,
   TripMember,
+  Notification,
 };

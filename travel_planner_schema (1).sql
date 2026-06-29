@@ -337,3 +337,10 @@ SET FOREIGN_KEY_CHECKS = 1;
 --    gian. Nếu sau này cần tái sử dụng địa điểm giữa nhiều trip hoặc
 --    làm tính năng khám phá/gợi ý độc lập, có thể thêm lại bảng
 --    `places` + cột place_id (FK) trong itinerary_items.
+
+
+-- 1. SỬA bảng users: thêm cột fcm_token
+USE `travel-planner`;
+
+ALTER TABLE `users`
+ADD COLUMN `fcm_token` VARCHAR(255) NULL;
