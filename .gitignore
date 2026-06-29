@@ -4,3 +4,6 @@ travel_planner_schema(1).sql
 
 serviceAccountKey.json
 
+travel_planner.sql
+
+node_modules/

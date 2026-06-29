@@ -6,7 +6,7 @@ const { initSocket } = require("./socketIO/socket.js");
 require("dotenv").config();
 require("./configs/firebase.js");
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 const server = http.createServer(app);
 initSocket(server);
