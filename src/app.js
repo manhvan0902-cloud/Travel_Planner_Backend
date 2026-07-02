@@ -18,6 +18,8 @@ const userRoute = require("./routes/userRoute");
 const tripRoute = require("./routes/tripRoute");
 const memberTripRoute = require("./routes/memberTripRoute");
 const notificationRoute = require("./routes/notificationRoute");
+const memorieRoute = require("./routes/memorieRoutes");
+
 //public route
 app.use("/api/auth", authRoute);
 
@@ -26,12 +28,14 @@ app.use("/api/users", userRoute);
 app.use("/api/trips", tripRoute);
 app.use("/api/members_trip", memberTripRoute);  
 app.use("/api/notifications", notificationRoute);
+app.use("/api/memories", memorieRoute);
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);
   res.status(500).json({
-    message: "Error server:",
+    message: "Lỗi máy chủ:",
     error: err.message,
   });
 });
@@ -40,7 +44,7 @@ app.use((err, req, res, next) => {
 app.use("/api/status", (req, res) => {
   res.status(200).json({
     status: "success",
-    message: "Backend Travel Planner API is running",
+    message: "Backend Travel Planner API đang chạy",
     Timestamp: new Date(),
   });
 });

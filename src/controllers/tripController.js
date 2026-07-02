@@ -26,14 +26,14 @@ exports.getMyTrips = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Trip fetched successfully",
+      message: "Lấy danh sách chuyến đi thành công",
       data: trips,
     });
   } catch (error) {
     console.error("Error in getMyTrips:", error);
     res.status(500).json({ 
       success: false, 
-      message: "Internal server error",
+      message: "Lỗi máy chủ nội bộ",
       error: error.message, 
     });
   }
@@ -53,7 +53,7 @@ exports.createTrip = async (req, res) => {
       }
       return res.status(400).json({ 
         success: false, 
-        message: "Title, start_date, and end_date are required",
+        message: "Title, start_date, and end_date bắt buộc",
       });
     }
 
@@ -88,7 +88,7 @@ exports.createTrip = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Trip created successfully",
+      message: "Tạo chuyến đi thành công",
       data: trip,
     });
   } catch (error) {
@@ -98,7 +98,7 @@ exports.createTrip = async (req, res) => {
     console.error("Error in createTrip:", error);
     res.status(500).json({ 
       success: false, 
-      message: "Internal server error",
+      message: "Lỗi máy chủ nội bộ",
       error: error.message, 
     });
   }
@@ -127,7 +127,7 @@ exports.getTripDetails = async (req, res) => {
     });
 
     if (!trip) {
-      return res.status(404).json({ success: false, message: "Trip not found" });
+      return res.status(404).json({ success: false, message: "Không tìm thấy chuyến đi" });
     }
 
     res.status(200).json({
@@ -136,7 +136,7 @@ exports.getTripDetails = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getTripDetails:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Lỗi máy chủ nội bộ" });
   }
 };
 
@@ -153,12 +153,12 @@ exports.updateTrip = async (req, res) => {
     if (!trip) {
       return res.status(404).json({ 
         success: false, 
-        message: "Trip not found" 
+        message: "Không tìm thấy chuyến đi" 
       });
     }
 
     if (trip.lead_id !== userId) {
-      return res.status(403).json({ success: false, message: "Only the trip lead can update the trip" });
+      return res.status(403).json({ success: false, message: "Chỉ trưởng nhóm mới có thể cập nhật chuyến đi" });
     }
 
     await trip.update({
@@ -200,14 +200,14 @@ exports.updateTrip = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Trip updated successfully",
+      message: "Cập nhật chuyến đi thành công",
       data: trip,
     });
   } catch (error) {
     console.error("Error in updateTrip:", error);
     res.status(500).json({ 
       success: false, 
-      message: "Internal server error",
+      message: "Lỗi máy chủ nội bộ",
       error: error.message,
     });
   }
@@ -222,11 +222,11 @@ exports.deleteTrip = async (req, res) => {
     const trip = await Trip.findByPk(id);
 
     if (!trip) {
-      return res.status(404).json({ success: false, message: "Trip not found" });
+      return res.status(404).json({ success: false, message: "Không tìm thấy chuyến đi" });
     }
 
     if (trip.lead_id !== userId) {
-      return res.status(403).json({ success: false, message: "Only the trip lead can delete the trip" });
+      return res.status(403).json({ success: false, message: "Chỉ trưởng nhóm mới có thể xóa chuyến đi" });
     }
     const members = await TripMember.findAll({
       where: { trip_id: id }
@@ -240,13 +240,13 @@ exports.deleteTrip = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Trip deleted successfully",
+      message: "Xóa chuyến đi thành công",
     });
   } catch (error) {
     console.error("Error in deleteTrip:", error);
     res.status(500).json({ 
       success: false, 
-      message: "Internal server error",
+      message: "Lỗi máy chủ nội bộ",
       error: error.message,
     });
   }

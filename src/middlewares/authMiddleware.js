@@ -10,7 +10,7 @@ module.exports = (req, res, next) => {
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: "No token, authorization denied",
+      message: "Không có token, từ chối quyền truy cập",
     });
   }
 
@@ -19,7 +19,7 @@ module.exports = (req, res, next) => {
     console.error("SECURITY ERROR: JWT_SECRET not configured");
     return res.status(500).json({
       success: false,
-      message: "Server configuration error",
+      message: "Lỗi cấu hình máy chủ",
     });
   }
 
@@ -31,14 +31,14 @@ module.exports = (req, res, next) => {
     if (err.name === "TokenExpiredError") {
       return res.status(401).json({
         success: false,
-        message: "Token has expired",
+        message: "Token đã hết hạn",
         code: "TOKEN_EXPIRED",
         expiredAt: err.expiredAt,
       });
     }
     return res.status(401).json({
       success: false,
-      message: "Token is not valid",
+      message: "Token không hợp lệ",
     });
   }
 };
