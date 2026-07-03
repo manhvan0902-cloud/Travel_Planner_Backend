@@ -1,5 +1,6 @@
-const { Memorie, Trip, TripMember, User } = require("../models/index.js");
+const { Memorie, Trip, TripMember, User, Notification } = require("../models/index.js");
 const { cloudinary } = require("../configs/cloudinary");
+const { emitToUser } = require("../socketIO/socket.js");
 
 // Upload memories
 exports.uploadMemories = async (req, res) => {
@@ -68,6 +69,36 @@ exports.uploadMemories = async (req, res) => {
       });
 
       createdMemories.push(populatedMemory);
+    }
+
+    if (createdMemories.length > 0) {
+      const uploaderName = createdMemories[0].uploader.full_name;
+      
+      const allMembers = await TripMember.findAll({
+        where: { trip_id, status: 'accepted' }
+      });
+
+      for (const mem of allMembers) {
+        if (mem.user_id !== userId) {
+          try {
+            const notification = await Notification.create({
+              user_id: mem.user_id,
+              type: "new_memory",
+              title: "Upload ảnh chuyến đi",
+              body: `${uploaderName} đã thêm ${createdMemories.length} ảnh/video mới vào chuyến đi "${trip.title}"`,
+              metadata: {
+                tripId: trip.id,
+                senderId: userId,
+                senderName: uploaderName,
+                title: trip.title
+              }
+            });
+            emitToUser(mem.user_id, "newNotification", notification);
+          } catch (notifErr) {
+            console.error("Lỗi khi tạo thông báo tải lên kỷ niệm:", notifErr);
+          }
+        }
+      }
     }
 
     res.status(201).json({

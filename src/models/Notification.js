@@ -20,7 +20,8 @@ const Notification = sequelize.define(
         "expense_added",
         "schedule_updated",
         "checkout_reminder",
-        "member_joined"
+        "member_joined",
+        "new_memory"
       ),
       allowNull: false,
     },
