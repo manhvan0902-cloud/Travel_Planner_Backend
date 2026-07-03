@@ -13,12 +13,16 @@ cloudinary.config({
 const createStorage = (folderName, transformations) => {
   return new CloudinaryStorage({
     cloudinary,
-    params: async (req, file) => ({
-      folder: `Travel_Planner_Cloud/${folderName}`,
-      allowed_formats: ["jpg", "png", "jpeg", "gif", "webp"],
-      transformation: transformations,
-      timeout: 10000,
-    }),
+    params: async (req, file) => {
+      const isVideo = file && file.mimetype && file.mimetype.startsWith('video');
+      return {
+        folder: `Travel_Planner_Cloud/${folderName}`,
+        allowed_formats: isVideo ? ["mp4", "mov", "avi", "mkv", "webm"] : ["jpg", "png", "jpeg", "gif", "webp"],
+        resource_type: isVideo ? "video" : "image",
+        transformation: isVideo ? [] : transformations,
+        timeout: 60000,
+      };
+    },
   });
 };
 

@@ -19,7 +19,7 @@ exports.uploadMemories = async (req, res) => {
     if(!files){
       return res.status(400).json({
         success: false,
-        message: "Cần có ít nhất một file ảnh"
+        message: "Cần có ít nhất một file ảnh/video"
       })
     }
   
@@ -120,7 +120,7 @@ exports.deleteMemorie = async (req, res) => {
         try {
           await cloudinary.uploader.destroy(publicId, { resource_type: memory.media_type === 'video' ? 'video' : 'image' });
         } catch (cloudErr) {
-          console.error("Lỗi khi xóa ảnh trên Cloudinary:", cloudErr);
+          console.error("Lỗi khi xóa ảnh/video trên Cloudinary:", cloudErr);
         }
       }
     }
@@ -141,7 +141,7 @@ exports.deleteMemorie = async (req, res) => {
   }
 };
 
-// Lấy tất cả ảnhảnh/video theo tất cả các ngày/ từng ngày của chuyến đi
+// Lấy tất cả ảnh/video theo tất cả các ngày/từng ngày của chuyến đi
 exports.getGroupedMemoriesByTrip = async (req, res) => {
   try {
     const { trip_id } = req.params;
@@ -218,7 +218,7 @@ exports.getGroupedMemoriesByTrip = async (req, res) => {
   }
 };
 
-// Lấy thông tin chuyến đi (done)
+// Lấy thông tin chuyến đi
 exports.getMemorieTripInfo = async (req, res) => {
   try {
     const { trip_id } = req.params;
@@ -237,22 +237,18 @@ exports.getMemorieTripInfo = async (req, res) => {
       return res.status(403).json({ success: false, message: "Bạn không phải là thành viên của chuyến đi này" });
     }
 
-    // Lấy số lượng thành viên của chuyến đi
     const actualMemberCount = await TripMember.count({
       where: { trip_id, status: 'accepted' }
     });
 
-    // Lấy số lượng ảnh và video của chuyến đi
     const totalMemories = await Memorie.count({
       where: { trip_id }
     });
 
-    // Tính số ngày của chuyến đi
     const startDate = new Date(trip.start_date);
     const endDate = new Date(trip.end_date);
     const daysCount = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
-    // Lấy danh sách thành viên đã đăng ảnh
     const uploaderMemories = await Memorie.findAll({
       where: { trip_id },
       attributes: ['uploaded_by_id'],
