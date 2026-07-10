@@ -19,6 +19,7 @@ const tripRoute = require("./routes/tripRoute");
 const memberTripRoute = require("./routes/memberTripRoute");
 const notificationRoute = require("./routes/notificationRoute");
 const memorieRoute = require("./routes/memorieRoutes");
+const checkListRoute = require("./routes/checkListRoute");
 
 //public route
 app.use("/api/auth", authRoute);
@@ -29,6 +30,7 @@ app.use("/api/trips", tripRoute);
 app.use("/api/members_trip", memberTripRoute);  
 app.use("/api/notifications", notificationRoute);
 app.use("/api/memories", memorieRoute);
+app.use("/api/checklists", checkListRoute);
 
 
 // Error handling middleware

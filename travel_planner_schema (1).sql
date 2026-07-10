@@ -204,11 +204,25 @@ CREATE TABLE contributions (
 ) ENGINE=InnoDB;
 
 -- =====================================================================
--- 9. CHECKLIST ITEMS
+-- 9. CHECKLIST GROUPS
+-- =====================================================================
+CREATE TABLE checklist_groups (
+  id            CHAR(36)      NOT NULL PRIMARY KEY,
+  trip_id       CHAR(36)      NOT NULL,
+  category      VARCHAR(255)  NOT NULL,
+  created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_group_trip FOREIGN KEY (trip_id) REFERENCES trips(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  INDEX idx_group_trip (trip_id)
+) ENGINE=InnoDB;
+
+-- =====================================================================
+-- 10. CHECKLIST ITEMS
 -- =====================================================================
 CREATE TABLE checklist_items (
   id            CHAR(36)      NOT NULL PRIMARY KEY,
   trip_id       CHAR(36)      NOT NULL,
+  group_id      CHAR(36)      NOT NULL,
   title         VARCHAR(255)  NOT NULL,
   is_completed  TINYINT(1)    NOT NULL DEFAULT 0,
   assigned_to   CHAR(36)      NULL,                              -- FK -> users; NULL => Lead chịu trách nhiệm
@@ -217,11 +231,14 @@ CREATE TABLE checklist_items (
   created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_chk_trip FOREIGN KEY (trip_id) REFERENCES trips(id)
     ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_chk_group FOREIGN KEY (group_id) REFERENCES checklist_groups(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_chk_assignee FOREIGN KEY (assigned_to) REFERENCES users(id)
     ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_chk_creator FOREIGN KEY (created_by_id) REFERENCES users(id)
     ON DELETE RESTRICT ON UPDATE CASCADE,
   INDEX idx_chk_trip (trip_id),
+  INDEX idx_chk_group (group_id),
   INDEX idx_chk_assignee (assigned_to)
 ) ENGINE=InnoDB;
 
@@ -344,3 +361,14 @@ USE `travel-planner`;
 
 ALTER TABLE `users`
 ADD COLUMN `fcm_token` VARCHAR(255) NULL;
+
+
+ALTER TABLE notifications
+MODIFY COLUMN type ENUM(
+    'trip_invite',
+    'expense_added',
+    'schedule_updated',
+    'checkout_reminder',
+    'member_joined',
+    'new_memory'
+) NOT NULL;

@@ -7,6 +7,8 @@ const OtpCode = require('./OtpCode');
 const ItineraryDay = require('./ItineraryDay');
 const ItineraryItem = require('./ItineraryItem');
 const Memorie = require('./Memorie');
+const CheckList_group = require('./checkListGroup');
+const CheckList_item = require('./checkList');
 
 // 1. User <-> RefreshToken (One-to-Many)
 User.hasMany(RefreshToken, { foreignKey: 'user_id', as: 'refresh_tokens' });
@@ -60,6 +62,25 @@ Memorie.belongsTo(Trip, { foreignKey: 'trip_id' });
 User.hasMany(Memorie, { foreignKey: 'uploaded_by_id', as: 'uploaded_memories' });
 Memorie.belongsTo(User, { foreignKey: 'uploaded_by_id', as: 'uploader' });
 
+// 14. Trip <-> CheckList_group (One-to-Many)
+Trip.hasMany(CheckList_group, { foreignKey: 'trip_id', as: 'checklist_groups' });
+CheckList_group.belongsTo(Trip, { foreignKey: 'trip_id' });
+
+// 15. CheckList_group <-> CheckList_item (One-to-Many)
+CheckList_group.hasMany(CheckList_item, { foreignKey: 'group_id', as: 'items' });
+CheckList_item.belongsTo(CheckList_group, { foreignKey: 'group_id' });
+
+// 16. Trip <-> CheckList_item (One-to-Many - fast queries)
+Trip.hasMany(CheckList_item, { foreignKey: 'trip_id', as: 'all_checklist_items' });
+CheckList_item.belongsTo(Trip, { foreignKey: 'trip_id' });
+
+// 17. User <-> CheckList_item (One-to-Many - assignee & creator)
+User.hasMany(CheckList_item, { foreignKey: 'assigned_to', as: 'assigned_tasks' });
+CheckList_item.belongsTo(User, { foreignKey: 'assigned_to', as: 'assignee' });
+
+User.hasMany(CheckList_item, { foreignKey: 'created_by_id', as: 'created_tasks' });
+CheckList_item.belongsTo(User, { foreignKey: 'created_by_id', as: 'creator' });
+
 module.exports = {
   User,
   RefreshToken,
@@ -70,4 +91,6 @@ module.exports = {
   ItineraryDay,
   ItineraryItem,
   Memorie,
+  CheckList_group,
+  CheckList_item,
 };
