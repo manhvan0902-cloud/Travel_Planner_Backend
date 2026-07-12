@@ -31,11 +31,11 @@ exports.getMembers = async (req, res) => {
   }
 };
 
-// 2. Mời thành viên
+// 2. Mời thành viên bằng mail
 exports.inviteMember = async (req, res) => {
   try {
     const { trip_id } = req.params;
-    const { user_id } = req.body; // user được mời
+    const { email } = req.body;
     const currentUserId = req.user.id;
     const currentUserFullName = req.user.full_name || "Someone";
 
@@ -47,10 +47,12 @@ exports.inviteMember = async (req, res) => {
       return res.status(403).json({ success: false, message: "Bạn không có quyền mời thành viên" });
     }
 
-    const userToInvite = await User.findByPk(user_id);
+    const userToInvite = await User.findOne({ where: { email } });
     if (!userToInvite) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy user cần mời" });
+      return res.status(404).json({ success: false, message: "Không tìm thấy user với email này" });
     }
+    
+    const user_id = userToInvite.id;
 
     const existingMember = await TripMember.findOne({
       where: { trip_id, user_id },
@@ -80,7 +82,6 @@ exports.inviteMember = async (req, res) => {
       },
     });
 
-    // Realtime notification cho user được mời
     emitToUser(user_id, "newNotification", notification);
 
     res.status(200).json({
@@ -123,7 +124,6 @@ exports.acceptInvitation = async (req, res) => {
     member.joined_at = new Date();
     await member.save();
 
-    // Thông báo realtime cho Lead
     const trip = await Trip.findByPk(trip_id);
     if (trip) {
       const notification = await Notification.create({
@@ -138,6 +138,13 @@ exports.acceptInvitation = async (req, res) => {
         },
       });
       emitToUser(trip.lead_id, "newNotification", notification);
+      
+      const allMembers = await TripMember.findAll({ where: { trip_id: trip.id, status: 'accepted' } });
+      for (const m of allMembers) {
+        if (m.user_id !== currentUserId) {
+          emitToUser(m.user_id, "tripUpdated", trip);
+        }
+      }
     }
 
     res.status(200).json({
@@ -222,10 +229,8 @@ exports.removeMember = async (req, res) => {
 
     await member.destroy();
 
-    // Cập nhật realtime cho người bị kick
     emitToUser(user_id, "memberRemoved", { tripId: trip.id, title: trip.title });
 
-    // Cập nhật realtime cho các thành viên còn lại để họ update danh sách
     const remainingMembers = await TripMember.findAll({ where: { trip_id } });
     for (const m of remainingMembers) {
       emitToUser(m.user_id, "tripUpdated", trip);
@@ -237,6 +242,144 @@ exports.removeMember = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in removeMember:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Lỗi server", 
+      error: error.message 
+    });
+  }
+};
+
+// 6. Rời khỏi trip
+exports.leaveTrip = async (req, res) => {
+  try {
+    const { trip_id } = req.params;
+    const currentUserId = req.user.id;
+
+    const trip = await Trip.findByPk(trip_id);
+    if (!trip) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy chuyến đi" });
+    }
+
+    const member = await TripMember.findOne({
+      where: { trip_id, user_id: currentUserId },
+    });
+
+    if (!member) {
+      return res.status(404).json({ success: false, message: "Bạn không phải là thành viên của chuyến đi này" });
+    }
+
+    if (trip.lead_id === currentUserId) {
+      const allMembers = await TripMember.findAll({
+        where: { trip_id, status: 'accepted' },
+        order: [['created_at', 'ASC']],
+      });
+      const nextLeader = allMembers.find(m => m.user_id !== currentUserId);
+
+      if (nextLeader) {
+        trip.lead_id = nextLeader.user_id;
+        await trip.save();
+      } else {
+        await trip.destroy();
+        return res.status(200).json({
+          success: true,
+          message: `Chuyến đi ${trip.title} đã bị xóa vì không còn thành viên.`,
+        });
+      }
+    }
+
+    await member.destroy();
+
+    const remainingMembers = await TripMember.findAll({ where: { trip_id } });
+    for (const m of remainingMembers) {
+      emitToUser(m.user_id, "tripUpdated", trip);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Bạn đã rời khỏi chuyến đi ${trip.title}.`
+    });
+  } catch (error) {
+    console.error("Error in leaveTrip:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Lỗi server", 
+      error: error.message 
+    });
+  }
+};
+
+// 7. Tham gia chuyến đi bằng mã trip_code
+exports.joinTripByCode = async (req, res) => {
+  try {
+    const { trip_code } = req.body;
+    const currentUserId = req.user.id;
+    const currentUserFullName = req.user.full_name || "Someone";
+
+    if (!trip_code) {
+      return res.status(400).json({ success: false, message: "Vui lòng nhập mã chuyến đi" });
+    }
+
+    const trip = await Trip.findOne({ where: { trip_code } });
+    if (!trip || trip_code !== trip.trip_code) {
+      return res.status(404).json({ success: false, message: "Mã chuyến đi không hợp lệ hoặc không tồn tại" });
+    }
+
+    const existingMember = await TripMember.findOne({
+      where: { trip_id: trip.id, user_id: currentUserId },
+    });
+
+    if (existingMember) {
+      if (existingMember.status === 'accepted') {
+        return res.status(400).json({ success: false, message: "Bạn đã tham gia chuyến đi này" });
+      } else if (existingMember.status === 'pending' || existingMember.status === 'rejected') {
+        existingMember.status = 'accepted';
+        existingMember.joined_at = new Date();
+        await existingMember.save();
+      }
+    } else {
+      await TripMember.create({
+        trip_id: trip.id,
+        user_id: currentUserId,
+        role: "member",
+        status: "accepted",
+        joined_at: new Date(),
+      });
+    }
+
+    if (trip.lead_id !== currentUserId) {
+      const notification = await Notification.create({
+        user_id: trip.lead_id,
+        type: "member_joined",
+        title: "Thành viên mới",
+        body: `${currentUserFullName} đã tham gia chuyến đi "${trip.title}"`
+      });
+      emitToUser(trip.lead_id, "newNotification", notification);
+    }
+
+    const allMembers = await TripMember.findAll({ where: { trip_id: trip.id } });
+    for (const m of allMembers) {
+      if (m.user_id !== currentUserId) {
+        emitToUser(m.user_id, "tripUpdated", trip);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Tham gia chuyến đi "${trip.title}" thành công.`,
+      data: {
+        tripId: trip.id,
+        title: trip.title,
+        start_date: trip.start_date,
+        end_date: trip.end_date,
+        cover_image: trip.cover_image,
+        status: trip.status,
+        member_count: allMembers.length,
+      }
+    });
+
+  } catch (error) {
+    console.error("Error in joinTripByCode:", error);
     res.status(500).json({ 
       success: false, 
       message: "Lỗi server", 

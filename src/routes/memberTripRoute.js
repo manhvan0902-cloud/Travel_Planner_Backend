@@ -5,6 +5,8 @@ const {
   acceptInvitation,
   rejectInvitation,
   removeMember,
+  leaveTrip,
+  joinTripByCode
 } = require("../controllers/memberTripController.js");
 const authMiddleware = require("../middlewares/authMiddleware.js");
 
@@ -17,5 +19,9 @@ router.post("/:trip_id/invite", inviteMember);
 router.put("/:trip_id/accept", acceptInvitation);
 router.put("/:trip_id/reject", rejectInvitation);
 router.delete("/:trip_id/:user_id/remove", removeMember);
+
+router.delete("/:trip_id/leave", leaveTrip);
+
+router.post("/join/code", joinTripByCode);
 
 module.exports = router;

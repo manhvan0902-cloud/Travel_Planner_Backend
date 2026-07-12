@@ -10,6 +10,11 @@ const Trip = sequelize.define(
       primaryKey: true,
       allowNull: false,
     },
+    trip_code: {
+      type: DataTypes.STRING(10),
+      allowNull: false,
+      unique: true,
+    },
     title: {
       type: DataTypes.STRING(255),
       allowNull: false,

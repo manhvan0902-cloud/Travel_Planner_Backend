@@ -42,7 +42,7 @@ CREATE TABLE trips (
   lead_id       CHAR(36)      NOT NULL,                         -- FK -> users (Lead)
   total_budget  DECIMAL(14,2) NULL,
   member_count  INT           NOT NULL DEFAULT 1,               -- số người DỰ KIẾN, Lead nhập tay
-                                                                  -- (KHÔNG đồng bộ tự động từ trip_members;
+                                                                   -- (KHÔNG đồng bộ tự động từ trip_members;
                                                                   -- số người thực tế đang tham gia lấy bằng
                                                                   -- COUNT(trip_members) lúc query, không cache)
   created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -372,3 +372,7 @@ MODIFY COLUMN type ENUM(
     'member_joined',
     'new_memory'
 ) NOT NULL;
+
+
+ALTER TABLE trips 
+ADD COLUMN trip_code VARCHAR(10) NOT NULL UNIQUE AFTER id;

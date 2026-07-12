@@ -6,7 +6,7 @@ const {
     createChecklistItem,
     getChecklistItems,
     deleteChecklistItem,
-    updateChecklistItem
+    toggleChecklistItem
 } = require("../controllers/checkListController.js");
 const authMiddleware = require("../middlewares/authMiddleware.js");
 
@@ -17,6 +17,6 @@ router.post("/group", createCheckListGroup);
 router.post("/item", createChecklistItem);
 router.get("/trip/:trip_id", getChecklistItems);
 router.delete("/item/:item_id", deleteChecklistItem);
-router.put("/item/:item_id", updateChecklistItem);
+router.put("/item/toggle/:item_id", toggleChecklistItem);
 
 module.exports = router;

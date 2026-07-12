@@ -57,9 +57,31 @@ exports.createTrip = async (req, res) => {
       });
     }
 
+    const generateTripCode = () => {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 6; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      return result;
+    };
+    
+    // Đảm bảo trip_code duy nhất
+    let trip_code = generateTripCode();
+    let isUnique = false;
+    while (!isUnique) {
+      const existing = await Trip.findOne({ where: { trip_code } });
+      if (!existing) {
+        isUnique = true;
+      } else {
+        trip_code = generateTripCode();
+      }
+    }
+
     const trip = await Trip.create(
       {
         title,
+        trip_code,
         cover_image,
         start_date,
         end_date,

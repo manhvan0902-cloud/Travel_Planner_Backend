@@ -1,4 +1,16 @@
-const { Trip, User, CheckList_group, CheckList_item } = require("../models/index.js");
+const { Trip, User, CheckList_group, CheckList_item, TripMember } = require("../models/index.js");
+const { emitToUser } = require("../socketIO/socket.js");
+
+const notifyChecklistUpdated = async (trip_id) => {
+    try {
+        const members = await TripMember.findAll({ where: { trip_id, status: 'accepted' } });
+        for (const mem of members) {
+            emitToUser(mem.user_id, "checklistUpdated", { trip_id });
+        }
+    } catch (err) {
+        console.error("Error emitting checklistUpdated:", err);
+    }
+};
 
 // Tạo nhóm đồ mới
 exports.createCheckListGroup = async (req, res) => {
@@ -36,6 +48,7 @@ exports.createCheckListGroup = async (req, res) => {
             trip_id, category
         });
         
+        await notifyChecklistUpdated(trip_id);
 
         return res.status(200).json({
             success: true,
@@ -92,6 +105,8 @@ exports.createChecklistItem = async (req, res) => {
             due_date: due_date || null,
             created_by_id
         });
+
+        await notifyChecklistUpdated(trip_id);
 
         return res.status(201).json({
             success: true,
@@ -170,8 +185,11 @@ exports.deleteChecklistItem = async (req, res) => {
             return res.status(404).json({ success: false, message: "Không tìm thấy items" });
         }
         
+        const trip_id = item.trip_id;
         await item.destroy();
         
+        await notifyChecklistUpdated(trip_id);
+
         return res.status(200).json({ success: true, message: "Xóa thành công" });
     } catch (err) {
         return res.status(500).json({ success: false, message: "Lỗi hệ thống", error: err.message });
@@ -179,7 +197,7 @@ exports.deleteChecklistItem = async (req, res) => {
 };
 
 //Đánh dấu đã hoàn thành
-exports.updateChecklistItem = async (req, res) => {
+exports.toggleChecklistItem = async (req, res) => {
     try {
         const { item_id } = req.params;
 
@@ -191,6 +209,8 @@ exports.updateChecklistItem = async (req, res) => {
         item.is_completed = !item.is_completed;
 
         await item.save();
+
+        await notifyChecklistUpdated(item.trip_id);
 
         return res.status(200).json({ 
             success: true, 

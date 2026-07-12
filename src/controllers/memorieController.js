@@ -94,6 +94,7 @@ exports.uploadMemories = async (req, res) => {
               }
             });
             emitToUser(mem.user_id, "newNotification", notification);
+            emitToUser(mem.user_id, "newMemory", { trip_id, memories: createdMemories });
           } catch (notifErr) {
             console.error("Lỗi khi tạo thông báo tải lên kỷ niệm:", notifErr);
           }
@@ -157,6 +158,13 @@ exports.deleteMemorie = async (req, res) => {
     }
 
     await memory.destroy();
+
+    const members = await TripMember.findAll({ where: { trip_id: trip.id, status: 'accepted' } });
+    for (const mem of members) {
+      if (mem.user_id !== userId) {
+        emitToUser(mem.user_id, "memoryDeleted", { trip_id: trip.id, memory_id });
+      }
+    }
 
     res.status(200).json({
       success: true,
